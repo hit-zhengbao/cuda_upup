@@ -329,9 +329,11 @@ void CheckMatVal(float *mat0, float *mat1, int w, int h, int stride_num)
     {
         for (int x = 0; x < w; ++x)
         {
-            if (std::abs(mat0[y * stride_num + x] - mat1[y * stride_num + x]) > 1e-6)
+            float diff = std::abs(mat0[y * stride_num + x] - mat1[y * stride_num + x]);
+            if (diff > 1e-6)
             {
-                std::cout << "mat0: " << mat0[y * stride_num + x] << " ,mat1: " << mat1[y * stride_num + x] << " , y: " << y  << " , x: " << x << std::endl;
+                std::cout << "mat0: " << mat0[y * stride_num + x] << " ,mat1: " << mat1[y * stride_num + x] << ", diff: " << diff \
+                 << " , y: " << y  << " , x: " << x << std::endl;
                 return;
             }
         }
@@ -340,9 +342,17 @@ void CheckMatVal(float *mat0, float *mat1, int w, int h, int stride_num)
     std::cout << "**** Cmp Ok****" << std::endl;
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    const int size = 24;
+    if (argc < 3)
+    {
+        printf("Usage: ./matmul stride_num size\n");
+        return -1;
+    }
+
+    // int w = size, h = size, mat0_col = size;
+    int w = std::stoi(argv[2]), h = w, mat0_col = w, stride_num = std::stoi(argv[1]), size = stride_num;
+    printf("*** w: %d, h: %d, stride_num: %d\n", w, h, stride_num);
 
     std::vector<float> mat0(size * size);
     std::vector<float> mat1(size * size);
@@ -350,17 +360,14 @@ int main()
     std::vector<float> dst_c(size * size);
     std::vector<float> dst_host_cu(size * size);
 
-    // int w = size, h = size, mat0_col = size;
-    int w = 23, h = w, mat0_col = w, stride_num = size;
-
     std::srand(std::time(nullptr));
 
     for (size_t i = 0; i < mat0.size(); ++i)
     {
         // mat0[i] = std::rand() % size;
         // mat1[i] = std::rand() % size;
-        mat0[i] = i;
-        mat1[i] = i;
+        mat0[i] = i % 30;
+        mat1[i] = i % 30;
     }
 
     // gold
@@ -389,7 +396,6 @@ int main()
     dim3 grid_size((div_x + block_size.x - 1) / block_size.x, (div_y + block_size.y - 1) / block_size.y);
     
     printf("*** block size: %d*%d, grid size: %d*%d\n", block_size.x, block_size.y, grid_size.x, grid_size.y);
-    printf("*** w: %d, h: %d, stride_num: %d\n", w, h, stride_num);
 
     // top left
     MatMulTopLeft<<<grid_size, block_size>>>(mat0_cu, mat1_cu, dst_cu, mat0_col, w, h, stride_num);
@@ -429,6 +435,10 @@ int main()
 
     // Compare
     CheckMatVal(dst_c.data(), dst_host_cu.data(), w, h, stride_num);
+
+    cudaFree(mat0_cu);
+    cudaFree(mat1_cu);
+    cudaFree(dst_cu);
 
     return 0;
 }
