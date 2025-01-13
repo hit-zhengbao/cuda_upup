@@ -1,12 +1,15 @@
 #include "mat.h"
 
 #include <cuda_runtime.h>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
 
 namespace cudaup
 {
-Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const Sizes& strides) :
-         m_sizes(sizes), m_stride(strides), m_type(type), m_mem(mem), m_total_bytes(0),
-         m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr)
+CUDA_HOST_DEVICE Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const Sizes& strides) :
+                      m_sizes(sizes), m_stride(strides), m_type(type), m_mem(mem), m_total_bytes(0),
+                      m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr)
 {
     int pitch       = m_sizes.m_w * MatTypeSize(m_type) * m_sizes.m_ch;
     m_stride.m_w    = std::max(pitch, m_stride.m_w);
@@ -57,14 +60,14 @@ Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const Sizes& strides) :
     }
 }
 
-Mat::Mat(const Mat& other_mat) : m_sizes(other_mat.m_sizes), m_stride(other_mat.m_stride), m_type(other_mat.m_type), m_mem(other_mat.m_mem),
-                                 m_total_bytes(other_mat.m_total_bytes), m_raw_data(other_mat.m_raw_data), m_data(other_mat.m_data),
-                                 m_ref_count(other_mat.m_ref_count)
+CUDA_HOST_DEVICE Mat::Mat(const Mat& other_mat) : m_sizes(other_mat.m_sizes), m_stride(other_mat.m_stride), m_type(other_mat.m_type), m_mem(other_mat.m_mem),
+                                                  m_total_bytes(other_mat.m_total_bytes), m_raw_data(other_mat.m_raw_data), m_data(other_mat.m_data),
+                                                  m_ref_count(other_mat.m_ref_count)
 {
     AddReference(1);
 }
 
-Mat& Mat::operator=(const Mat& other_mat)
+CUDA_HOST_DEVICE Mat& Mat::operator=(const Mat& other_mat)
 {
     if (this == &other_mat)
     {
@@ -85,12 +88,44 @@ Mat& Mat::operator=(const Mat& other_mat)
     AddReference(1);
 }
 
-Mat::~Mat()
+CUDA_HOST_DEVICE Mat::~Mat()
 {
     Release();
 }
 
-int32_t Mat::AddReference(int32_t delta)
+CUDA_HOST_DEVICE Mat Mat::clone(MemType mem) const
+{
+    MemType mem_type = MemType::MEM_INVALID == mem ? m_mem : mem;
+
+    Mat ret_mat(m_sizes, m_type, mem_type, m_stride);
+
+    if (ret_mat.empty())
+    {
+        LOG_ERROR("Failed to clone mat for no memory");
+        return Mat();
+    }
+
+    if (MemType::MEM_CPU == m_mem && MemType::MEM_CPU == mem_type)
+    {
+        memcpy(ret_mat.m_data, m_data, m_total_bytes);
+    }
+    else if (MemType::MEM_GPU == m_mem && MemType::MEM_GPU == mem_type)
+    {
+        cudaMemcpy(ret_mat.m_data, m_data, m_total_bytes, cudaMemcpyDeviceToDevice);
+    }
+    else if (MemType::MEM_GPU == m_mem && MemType::MEM_CPU == mem_type)
+    {
+        cudaMemcpy(ret_mat.m_data, m_data, m_total_bytes, cudaMemcpyDeviceToHost);
+    }
+    else if (MemType::MEM_CPU == m_mem && MemType::MEM_GPU == mem_type)
+    {
+        cudaMemcpy(ret_mat.m_data, m_data, m_total_bytes, cudaMemcpyHostToDevice);
+    }
+
+    return ret_mat;
+}
+
+CUDA_HOST_DEVICE int32_t Mat::AddReference(int32_t delta)
 {
     if (m_ref_count)
     {
@@ -102,7 +137,7 @@ int32_t Mat::AddReference(int32_t delta)
     return 0;
 }
 
-void Mat::Release()
+CUDA_HOST_DEVICE void Mat::Release()
 {
     m_sizes       = 0;
     m_stride      = 0;

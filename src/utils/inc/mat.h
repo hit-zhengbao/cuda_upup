@@ -1,6 +1,7 @@
 #pragma once
 
 #include "log.h"
+#include "def.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -57,7 +58,7 @@ enum class MemType
     MEM_GPU,
 };
 
-static int MatTypeSize(MatType type)
+static CUDA_HOST_DEVICE int MatTypeSize(MatType type)
 {
     switch (type)
     {
@@ -87,30 +88,86 @@ static int MatTypeSize(MatType type)
 class Mat
 {
 public:
-    Mat() : m_sizes(0), m_stride(0), m_type(MatType::MAT_INVALID), m_mem(MemType::MEM_INVALID), m_total_bytes(0),
-            m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr) {}
+    CUDA_HOST Mat() : m_sizes(0), m_stride(0), m_type(MatType::MAT_INVALID), m_mem(MemType::MEM_INVALID), m_total_bytes(0),
+                                m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr) {}
 
-    Mat(const Sizes& sizes, MatType type, MemType mem = MemType::MEM_CPU, const Sizes& strides = Sizes());
+    CUDA_HOST Mat(const Sizes& sizes, MatType type, MemType mem = MemType::MEM_CPU, const Sizes& strides = Sizes());
 
     // shallow copy
-    Mat(const Mat& other_mat);
+    CUDA_HOST Mat(const Mat& other_mat);
 
     // Shallow copy assignment operator
-    Mat& operator=(const Mat& other_mat);
+    CUDA_HOST Mat& operator=(const Mat& other_mat);
 
-    ~Mat();
+    /**
+     * @brief clone the matrix.
+     * 
+     * the stride of the new matrix is the same as the old one.
+     * 
+     * @param mem Memory type of the new matrix. If MemType::MEM_INVALID, the new matrix will use the same memory type as the old one.
+    */
+    CUDA_HOST Mat clone(MemType mem = MemType::MEM_INVALID) const;
 
-private:
-    // increase reference count by delta, return the new reference count
-    int32_t AddReference(int32_t delta = 1);
+    CUDA_HOST_DEVICE bool empty() const { return 0 == m_total_bytes || nullptr == m_raw_data; }
 
-    void Release();
+    /**
+     * @param row row index
+     * @param col column index
+     * @param ch  channel index
+    */
+    template<typename Tp> inline
+    CUDA_HOST_DEVICE const Tp* ptr(int32_t row = 0, int32_t col = 0, int32_t ch = 0) const
+    {
+        return (Tp *)(m_data + row * m_stride.m_w + col * m_sizes.m_ch * MatTypeSize(m_type) + ch * MatTypeSize(m_type));
+    }
+
+    /** @overload
+     * @param row row index
+     * @param col column index
+     * @param ch  channel index
+    */
+    template<typename Tp> inline
+    CUDA_HOST_DEVICE Tp* ptr(int32_t row = 0, int32_t col = 0, int32_t ch = 0)
+    {
+        return (Tp *)(m_data + row * m_stride.m_w + col * m_sizes.m_ch * MatTypeSize(m_type) + ch * MatTypeSize(m_type));
+    }
+
+    /**
+     * @param row row index
+     * @param col column index
+     * @param ch  channel index
+    */
+    template<typename Tp> inline
+    CUDA_HOST_DEVICE const Tp& at(int32_t row, int32_t col, int32_t ch = 0) const
+    {
+        return *ptr<Tp>(row, col, ch);
+    }
+
+    /** @overload
+     * @param row row index
+     * @param col column index
+     * @param ch  channel index
+    */
+    template<typename Tp> inline
+    CUDA_HOST_DEVICE Tp& at(int32_t row, int32_t col, int32_t ch = 0)
+    {
+        return *ptr<Tp>(row, col, ch);
+    }
+
+    CUDA_HOST ~Mat();
 
     Sizes   m_sizes;                    // size of the matrix
     Sizes   m_stride;                   // stride of the matrix
     MatType m_type;                     // type of the matrix
     MemType m_mem;                      // memory type of the matrix
     int32_t m_total_bytes;              // total size of the matrix
+
+private:
+    // increase reference count by delta, return the new reference count
+    CUDA_HOST int32_t AddReference(int32_t delta = 1);
+
+    CUDA_HOST void Release();
+
     uint8_t *m_raw_data;                // raw data of the matrix
     uint8_t *m_data;                    // data of the matrix
     std::atomic<int32_t> *m_ref_count;  // reference count of the matrix

@@ -21,6 +21,8 @@ message(STATUS "INC: ${INC_CUR_DIRS}")
 set(INC_DIRS "${INC_CUR_DIRS}" CACHE STRING "update include files" FORCE)
 set(TEST_SRC "${TEST_CUR_SRC}" CACHE STRING "update src impl files" FORCE)
 
+message(STATUS "IMPL_CUR_SRC: ${IMPL_CUR_SRC}")
+
 add_library(CUDAUp STATIC ${IMPL_CUR_SRC})
 set_target_properties(CUDAUp PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON  # 支持分离编译
