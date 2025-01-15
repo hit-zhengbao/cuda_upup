@@ -5,7 +5,7 @@
 #include <functional>
 #include <iostream>
 
-class SimpleGtest
+class SimpleGTest
 {
 public:
     // Used to register the test cases
@@ -13,6 +13,8 @@ public:
     {
         std::string            name;
         std::function<void()> func;
+
+        TestCase(const std::string& name, std::function<void()> func) : name(name), func(func) {}
     };
 
     // Run all test cases
@@ -82,6 +84,11 @@ public:
         std::cout << "[ RUN SINGLE NOT FOUND]: " << case_name << std::endl;
     }
 
+    static void RegisterTest(const std::string& name, std::function<void()> func)
+    {
+        GetTests().emplace_back(name, func);
+    }
+
 private:
     // Save all registered test cases
     static std::vector<TestCase>& GetTests()
@@ -94,8 +101,10 @@ private:
 // Define new test case
 #define SIMPLE_TEST(test_name)                                              \
     void test_name();                                                       \
+                                                                            \
     static bool test_name##_registered = []() {                             \
         SimpleGTest::RegisterTest(#test_name, test_name);                   \
         return true;                                                        \
     }();                                                                    \
+                                                                            \
     void test_name()

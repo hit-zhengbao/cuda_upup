@@ -1,19 +1,20 @@
 #include "mat.h"
 
 #include <cuda_runtime.h>
+
 #include <cstdint>
 #include <cstring>
 #include <iostream>
 
 namespace cudaup
 {
-CUDA_HOST_DEVICE Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const Sizes& strides) :
-                      m_sizes(sizes), m_stride(strides), m_type(type), m_mem(mem), m_total_bytes(0),
-                      m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr)
+CUDA_HOST Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const Sizes& strides) :
+                   m_sizes(sizes), m_stride(strides), m_type(type), m_mem(mem), m_total_bytes(0),
+                   m_raw_data(nullptr), m_data(nullptr), m_ref_count(nullptr), m_mat_all_on_cuda(nullptr)
 {
     int pitch       = m_sizes.m_w * MatTypeSize(m_type) * m_sizes.m_ch;
     m_stride.m_w    = std::max(pitch, m_stride.m_w);
-    m_total_bytes   = pitch * m_sizes.m_h;
+    m_total_bytes   = m_stride.m_w * m_sizes.m_h;
 
     // Init reference count
     m_ref_count = new std::atomic<int32_t>(1);
@@ -60,14 +61,14 @@ CUDA_HOST_DEVICE Mat::Mat(const Sizes& sizes, MatType type, MemType mem, const S
     }
 }
 
-CUDA_HOST_DEVICE Mat::Mat(const Mat& other_mat) : m_sizes(other_mat.m_sizes), m_stride(other_mat.m_stride), m_type(other_mat.m_type), m_mem(other_mat.m_mem),
-                                                  m_total_bytes(other_mat.m_total_bytes), m_raw_data(other_mat.m_raw_data), m_data(other_mat.m_data),
-                                                  m_ref_count(other_mat.m_ref_count)
+CUDA_HOST Mat::Mat(const Mat& other_mat) : m_sizes(other_mat.m_sizes), m_stride(other_mat.m_stride), m_type(other_mat.m_type), m_mem(other_mat.m_mem),
+                                           m_total_bytes(other_mat.m_total_bytes), m_raw_data(other_mat.m_raw_data), m_data(other_mat.m_data),
+                                           m_ref_count(other_mat.m_ref_count), m_mat_all_on_cuda(nullptr)
 {
     AddReference(1);
 }
 
-CUDA_HOST_DEVICE Mat& Mat::operator=(const Mat& other_mat)
+CUDA_HOST Mat& Mat::operator=(const Mat& other_mat)
 {
     if (this == &other_mat)
     {
@@ -84,16 +85,19 @@ CUDA_HOST_DEVICE Mat& Mat::operator=(const Mat& other_mat)
     m_raw_data    = other_mat.m_raw_data;
     m_data        = other_mat.m_data;
     m_ref_count   = other_mat.m_ref_count;
+    m_mat_all_on_cuda = nullptr;
 
     AddReference(1);
+
+    return *this;
 }
 
-CUDA_HOST_DEVICE Mat::~Mat()
+CUDA_HOST Mat::~Mat()
 {
     Release();
 }
 
-CUDA_HOST_DEVICE Mat Mat::clone(MemType mem) const
+CUDA_HOST Mat Mat::clone(MemType mem) const
 {
     MemType mem_type = MemType::MEM_INVALID == mem ? m_mem : mem;
 
@@ -125,7 +129,7 @@ CUDA_HOST_DEVICE Mat Mat::clone(MemType mem) const
     return ret_mat;
 }
 
-CUDA_HOST_DEVICE int32_t Mat::AddReference(int32_t delta)
+CUDA_HOST int32_t Mat::AddReference(int32_t delta)
 {
     if (m_ref_count)
     {
@@ -137,7 +141,7 @@ CUDA_HOST_DEVICE int32_t Mat::AddReference(int32_t delta)
     return 0;
 }
 
-CUDA_HOST_DEVICE void Mat::Release()
+CUDA_HOST void Mat::Release()
 {
     m_sizes       = 0;
     m_stride      = 0;
@@ -163,6 +167,42 @@ CUDA_HOST_DEVICE void Mat::Release()
         m_data      = nullptr;
         m_ref_count = nullptr;
     }
+
+    if (m_mat_all_on_cuda != nullptr)
+    {
+        cudaFree(m_mat_all_on_cuda);
+    }
+}
+
+CUDA_HOST_DEVICE Mat* Mat::GetMatAllOnCUDAMem()
+{
+    if (empty() && m_mem != MemType::MEM_GPU)
+    {
+        LOG_ERROR("mat is empty or data not on GPU");
+        return nullptr;
+    }
+
+    if (m_mat_all_on_cuda != nullptr)
+    {
+        // LOG_DEBUG("m_mat_all_on_cuda has been allocated");
+        return m_mat_all_on_cuda;
+    }
+
+    cudaMalloc(&m_mat_all_on_cuda, sizeof(Mat));
+    if (m_mat_all_on_cuda == nullptr)
+    {
+        LOG_ERROR("cudaMalloc failed");
+        return nullptr;
+    }
+
+    cudaMemcpy(m_mat_all_on_cuda, this, sizeof(Mat), cudaMemcpyHostToDevice);
+    if (cudaGetLastError() != cudaSuccess)
+    {
+        LOG_ERROR("cudaMemcpy failed");
+        return nullptr;
+    }
+
+    return m_mat_all_on_cuda;
 }
 
 } // namespace cudaup

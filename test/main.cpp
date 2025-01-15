@@ -15,11 +15,11 @@ int main(int argc, char **argv)
 
     if ("all" == run_case_str)
     {
-        SimpleGtest::RunAllTestCases();
+        SimpleGTest::RunAllTestCases();
     }
     else
     {
-        SimpleGtest::RunSingleTestCase(run_case_str);
+        SimpleGTest::RunSingleTestCase(run_case_str);
     }
 
     return 0;

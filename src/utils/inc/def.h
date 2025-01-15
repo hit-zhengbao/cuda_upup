@@ -11,3 +11,5 @@
 #define CUDA_GLOBAL
 #define CUDA_HOST_DEVICE
 #endif
+
+#define ALIGN(x, aligned_size)     (((x) + (aligned_size) - 1) & (~((aligned_size) - 1)))
