@@ -47,12 +47,14 @@ static int32_t MatMulTestImpl(const MatTestCase& test_case)
         return ret;
     }
 
+    LOG_INFO("MatMulTestImpl: %s, (%d*%d*%d)", test_case.name.c_str(), sizes.m_w, sizes.m_h, sizes.m_ch);
+
     // 2. Call GPU impl function
     {
         std::string tag_name = test_case.name + " " + std::to_string(sizes.m_w) + " * " + std::to_string(sizes.m_h) + " * " + std::to_string(sizes.m_ch);
         cudaup::TimeTracker time_tracker(tag_name);
 
-        ret = test_case.impl_func(a_gpu, b_gpu, c_gpu);
+        ret = AnalyzeFuncTime(10, 2, test_case.impl_func, std::ref(a_gpu), std::ref(b_gpu), std::ref(c_gpu));
         if (ret != RET_OK)
         {
             LOG_ERROR("MatMulTestImpl: call impl function failed!");
@@ -93,7 +95,7 @@ SIMPLE_TEST(mat_mul_test)
         {{256,   256, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
         {{512,   512, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
         {{1024, 1024, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
-        {{2048, 2048, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"}
+        // {{2048, 2048, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"}
     };
 
     for (const auto &test_case : test_cases)

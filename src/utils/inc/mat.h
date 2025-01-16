@@ -227,7 +227,7 @@ public:
             }
         }
 
-        LOG_INFO("**** Cmp Ok****");
+        LOG_INFO("**** Cmp Ok****\n");
         return RET_OK;
     }
 
