@@ -329,7 +329,8 @@ int32_t MatMulBlockAndNoLocalMem(Mat &mat0, Mat &mat1, Mat &dst)
     int32_t left_x   = w - offset_x;
     int32_t left_y   = h - offset_y;
 
-    dim3 block_size(16, 16); 
+    // dim3 block_size(4, 256 / 4); 
+    dim3 block_size(16, 8); 
     dim3 grid_size((div_x + block_size.x - 1) / block_size.x, (div_y + block_size.y - 1) / block_size.y);
     
     // LOG_DEBUG("*** block size: %d*%d, grid size: %d*%d", block_size.x, block_size.y, grid_size.x, grid_size.y);

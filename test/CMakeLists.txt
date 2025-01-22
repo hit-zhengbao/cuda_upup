@@ -6,7 +6,7 @@ message(STATUS "TEST_SRC: ${TEST_SRC}")
 
 add_executable(CUDAUpExe ${TEST_SRC})
 
-target_link_libraries(CUDAUpExe CUDAUp)
+target_link_libraries(CUDAUpExe CUDAUp CUDA::cudart)
 
 set_target_properties(CUDAUpExe PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON  # 支持分离编译

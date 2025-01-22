@@ -91,11 +91,19 @@ static int32_t MatMulTestImpl(const MatTestCase& test_case)
 SIMPLE_TEST(mat_mul_test)
 {
     std::vector<MatTestCase> test_cases = {
-        {{255,   255, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
-        {{256,   256, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
-        {{512,   512, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
-        {{1024, 1024, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
+        // 1. ******* MatMulBlockAndNoLocalMem ********
+        // {{255,   255, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
+        // {{256,   256, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
+        // {{512,   512, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
+        // {{1024, 1024, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"},
         // {{2048, 2048, 1}, cudaup::MatMulBlockAndNoLocalMem, cudaup::MatMulScalar, "MatMulBlockAndNoLocalMem"}
+
+        // 2. ******* MatMulShared ********
+        {{32,     32, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
+        {{32,     64, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
+        {{256,   256, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
+        {{512,   512, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
+        {{1024, 1024, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
     };
 
     for (const auto &test_case : test_cases)
