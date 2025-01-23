@@ -1,6 +1,6 @@
 #include "mat_mul.h"
 
-// 使用shared memory: 
+// 使用shared memory: 使用了共享内存, 但每个线程计算一个点
 // 参考实现https://github.com/PaddleJitLab/CUDATutorial/blob/develop/docs/07_optimize_matmul/matmul_shared.cu
 
 namespace cudaup
@@ -8,8 +8,13 @@ namespace cudaup
 template<const int BLOCK_SIZE>
 __global__ void MatMulSharedKernel(Mat *mat0, Mat *mat1, Mat *dst)
 {
-    const int32_t dst_y = blockIdx.y;
-    const int32_t dst_x = blockIdx.x;
+    const int32_t dst_y = blockIdx.y * BLOCK_SIZE;
+    const int32_t dst_x = blockIdx.x * BLOCK_SIZE;
+
+    if ((dst_x + BLOCK_SIZE) > dst->m_sizes.m_w || (dst_y + BLOCK_SIZE) > dst->m_sizes.m_h)
+    {
+        return;
+    }
 
     // Index of sub-matrix
     const int32_t thread_y  = threadIdx.x / BLOCK_SIZE;

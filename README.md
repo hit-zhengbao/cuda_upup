@@ -7,6 +7,17 @@ Enhance the skills of CUDA
  * Simple version of Google Test to test all test cases.
  * The Mat class makes it easy to do matrix operations on the host and the device.
 
+## Modules
+### matmuls
+Using various methods to do matrix multiplication.
+
+### simple_gtest
+The simple version of Google Test.
+
+### utils
+  * The implementation of Mat class.
+  * Other utils.
+
 ## Build
 ```shell
 bash scripts/build.sh

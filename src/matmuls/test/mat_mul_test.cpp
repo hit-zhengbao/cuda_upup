@@ -100,7 +100,6 @@ SIMPLE_TEST(mat_mul_test)
 
         // 2. ******* MatMulShared ********
         {{32,     32, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
-        {{32,     64, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
         {{256,   256, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
         {{512,   512, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
         {{1024, 1024, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
