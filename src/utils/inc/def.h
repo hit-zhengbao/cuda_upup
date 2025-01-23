@@ -13,3 +13,4 @@
 #endif
 
 #define ALIGN(x, aligned_size)     (((x) + (aligned_size) - 1) & (~((aligned_size) - 1)))
+#define CEIL_DIV(x, y)             (((x) + (y) - 1) / (y))
