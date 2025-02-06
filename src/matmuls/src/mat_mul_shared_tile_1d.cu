@@ -1,7 +1,7 @@
 #include "mat_mul.h"
 
 // 使用shared memory: 使用了共享内存,
-// 参考实现
+// 参考实现 https://github.com/PaddleJitLab/CUDATutorial/blob/develop/docs/07_optimize_matmul/matmul_tiled.cu
 
 namespace cudaup
 {
@@ -11,16 +11,18 @@ __global__ void MatMulSharedTile1DKernel(Mat *mat0, Mat *mat1, Mat *dst)
     const int32_t dst_y = blockIdx.y * BLOCK_M;
     const int32_t dst_x = blockIdx.x * BLOCK_N;
 
-    // if ((dst_x + BLOCK_SIZE) > dst->m_sizes.m_w || (dst_y + BLOCK_SIZE/4) > dst->m_sizes.m_h)
-    // {
-    //     return;
-    // }
+    if ((dst_x + BLOCK_N) > dst->m_sizes.m_w || (dst_y + BLOCK_M) > dst->m_sizes.m_h)
+    {
+        return;
+    }
 
     // Index of sub-matrix
     const int32_t mat0_thread_y = threadIdx.x / BLOCK_K;
     const int32_t mat0_thread_x = threadIdx.x % BLOCK_K;
     const int32_t mat1_thread_y = threadIdx.x / BLOCK_N;
     const int32_t mat1_thread_x = threadIdx.x % BLOCK_N;
+    const int32_t thread_row    = threadIdx.x / BLOCK_N;
+    // const int32_t thread_col    = threadIdx.x % BLOCK_N;
 
     // Allocate the shared memory for the block
     __shared__ float shared_mat0[BLOCK_M * BLOCK_K];
@@ -45,7 +47,7 @@ __global__ void MatMulSharedTile1DKernel(Mat *mat0, Mat *mat1, Mat *dst)
 
             for (int32_t k = 0; k < BLOCK_K_TILE; ++k)
             {
-                sum[k] += shared_mat0[(mat0_thread_y + k) * BLOCK_K + j] * tmp_val_mat1;
+                sum[k] += shared_mat0[(thread_row * BLOCK_K_TILE + k) * BLOCK_K + j] * tmp_val_mat1;
             }
         }
 
@@ -55,7 +57,7 @@ __global__ void MatMulSharedTile1DKernel(Mat *mat0, Mat *mat1, Mat *dst)
 
     for (int32_t i = 0; i < BLOCK_K_TILE; ++i)
     {
-        dst->at<float>(dst_y + mat0_thread_y + i, dst_x + mat1_thread_x) = sum[i];
+        dst->at<float>(dst_y + thread_row * BLOCK_K_TILE + i, dst_x + mat1_thread_x) = sum[i];
     }
 }
 
@@ -91,7 +93,7 @@ int32_t MatMulSharedTile1D(Mat &mat0, Mat &mat1, Mat &dst)
     dim3          grid_size(CEIL_DIV(w, BLOCK_N), CEIL_DIV(h, BLOCK_M));
     dim3          block_size_kernel(BLOCK_M * BLOCK_N / BLOCK_K_TILE);
 
-    MatMulSharedTile1DKernel<block_size><<<grid_size, block_size_kernel>>>(mat0.GetMatAllOnCUDAMem(), mat1.GetMatAllOnCUDAMem(), dst.GetMatAllOnCUDAMem());
+    MatMulSharedTile1DKernel<BLOCK_M, BLOCK_N, BLOCK_K, BLOCK_K_TILE><<<grid_size, block_size_kernel>>>(mat0.GetMatAllOnCUDAMem(), mat1.GetMatAllOnCUDAMem(), dst.GetMatAllOnCUDAMem());
 
     // Sync CUDA
     cudaError_t err = cudaDeviceSynchronize();

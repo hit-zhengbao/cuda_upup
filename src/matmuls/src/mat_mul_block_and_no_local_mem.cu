@@ -6,8 +6,6 @@ namespace cudaup
 /** 
  * 矩阵乘法，使用block和no local memory
 */
-#define CEIL_DIV(M, N) (((M) + (N) - 1) / (N))
-
 __device__ float4 MakeFloat4(float val)
 {
     return make_float4(val, val, val, val);
