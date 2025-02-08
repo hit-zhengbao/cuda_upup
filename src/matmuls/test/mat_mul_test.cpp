@@ -105,10 +105,14 @@ SIMPLE_TEST(mat_mul_test)
         // {{1024, 1024, 1}, cudaup::MatMulShared, cudaup::MatMulScalar, "MatMulShared"},
 
         // 3. ******* MatMulSharedTile1D ********
-        // {{32,     32, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
-        {{256,   256, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
-        {{512,   512, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
-        {{1024, 1024, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
+        // {{256,   256, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
+        // {{512,   512, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
+        // {{1024, 1024, 1}, cudaup::MatMulSharedTile1D, cudaup::MatMulScalar, "MatMulSharedTile1D"},
+
+        // 4. ******* MatMulSharedTile2D ********
+        {{256,   256, 1}, cudaup::MatMulSharedTile2D, cudaup::MatMulScalar, "MatMulSharedTile2D"},
+        {{512,   512, 1}, cudaup::MatMulSharedTile2D, cudaup::MatMulScalar, "MatMulSharedTile2D"},
+        {{1024, 1024, 1}, cudaup::MatMulSharedTile2D, cudaup::MatMulScalar, "MatMulSharedTile2D"},
     };
 
     for (const auto &test_case : test_cases)

@@ -21,8 +21,8 @@ __global__ void MatMulSharedTile2DKernel(Mat *mat0, Mat *mat1, Mat *dst)
     const int32_t mat0_thread_x = threadIdx.x % BLOCK_K;    // 0 ~ 7
     const int32_t mat1_thread_y = threadIdx.x / BLOCK_N;    // 0
     const int32_t mat1_thread_x = threadIdx.x % BLOCK_N;    // 0 ~ 63
-    const int32_t thread_row    = threadIdx.x / (BLOCK_N / BLOCK_N_TILE);
-    const int32_t thread_col    = threadIdx.x % (BLOCK_N / BLOCK_N_TILE);
+    const int32_t thread_row    = threadIdx.x / (BLOCK_N / BLOCK_N_TILE);   // 0 ~ 7
+    const int32_t thread_col    = threadIdx.x % (BLOCK_N / BLOCK_N_TILE);   // 0 ~ 7
 
     // Allocate the shared memory for the block
     __shared__ float shared_mat0[BLOCK_M * BLOCK_K];
@@ -55,12 +55,23 @@ __global__ void MatMulSharedTile2DKernel(Mat *mat0, Mat *mat1, Mat *dst)
         // Compute the product of the two matrices of the sub-matrix
         for (int32_t j = 0; j < BLOCK_K; ++j)
         {
-            // sum += shared_mat0[thread_y * BLOCK_SIZE + j] * shared_mat1[j * BLOCK_SIZE + thread_x];
-            float tmp_val_mat1 = shared_mat1[j * BLOCK_N + mat1_thread_x];
-
-            for (int32_t k = 0; k < BLOCK_K_TILE; ++k)
+            // load the data from shared memory to registers
+            for (int32_t k = 0; k < BLOCK_M_TILE; ++k)
             {
-                sum[k] += shared_mat0[(thread_row * BLOCK_K_TILE + k) * BLOCK_K + j] * tmp_val_mat1;
+                reg_m[k] = shared_mat0[(thread_row * BLOCK_M_TILE + k) * BLOCK_K + j];
+            }
+
+            for (int32_t k = 0; k < BLOCK_N_TILE; ++k)
+            {
+                reg_n[k] = shared_mat1[(j * BLOCK_N + thread_col * BLOCK_N_TILE + k)];
+            }
+
+            for (int32_t idx_y = 0; idx_y < BLOCK_M_TILE; ++idx_y)
+            {
+                for (int32_t idx_x = 0; idx_x < BLOCK_N_TILE; ++idx_x)
+                {
+                    sum[idx_y * BLOCK_N_TILE + idx_x] += reg_m[idx_y] * reg_n[idx_x];
+                }
             }
         }
 
@@ -68,9 +79,12 @@ __global__ void MatMulSharedTile2DKernel(Mat *mat0, Mat *mat1, Mat *dst)
         __syncthreads();
     }
 
-    for (int32_t i = 0; i < BLOCK_K_TILE; ++i)
+    for (int32_t i = 0; i < BLOCK_M_TILE; ++i)
     {
-        dst->at<float>(dst_y + thread_row * BLOCK_K_TILE + i, dst_x + mat1_thread_x) = sum[i];
+        for (int32_t j = 0; j < BLOCK_N_TILE; ++j)
+        {
+            dst->at<float>(dst_y + thread_row * BLOCK_M_TILE + i, dst_x + thread_col * BLOCK_N_TILE + j) = sum[i * BLOCK_N_TILE + j];
+        }
     }
 }
 
@@ -104,9 +118,9 @@ int32_t MatMulSharedTile2D(Mat &mat0, Mat &mat1, Mat &dst)
 
     const int32_t BLOCK_M = 64, BLOCK_N = 64, BLOCK_K = 8, BLOCK_M_TILE = 8, BLOCK_N_TILE = 8;
     dim3          grid_size(CEIL_DIV(w, BLOCK_N), CEIL_DIV(h, BLOCK_M));
-    dim3          block_size_kernel(BLOCK_M * BLOCK_N / BLOCK_K_TILE);
+    dim3          block_size_kernel(BLOCK_M * BLOCK_N / (BLOCK_M_TILE * BLOCK_N_TILE));
 
-    MatMulSharedTile2DKernel<BLOCK_M, BLOCK_N, BLOCK_K, BLOCK_K_TILE><<<grid_size, block_size_kernel>>>(mat0.GetMatAllOnCUDAMem(), mat1.GetMatAllOnCUDAMem(), dst.GetMatAllOnCUDAMem());
+    MatMulSharedTile2DKernel<BLOCK_M, BLOCK_N, BLOCK_K, BLOCK_M_TILE, BLOCK_N_TILE><<<grid_size, block_size_kernel>>>(mat0.GetMatAllOnCUDAMem(), mat1.GetMatAllOnCUDAMem(), dst.GetMatAllOnCUDAMem());
 
     // Sync CUDA
     cudaError_t err = cudaDeviceSynchronize();
