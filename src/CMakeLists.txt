@@ -14,6 +14,7 @@ endmacro()
 add_new_module(simple_gtest)
 add_new_module(matmuls)
 add_new_module(utils)
+add_new_module(reduce)
 
 include_directories("${INC_CUR_DIRS}")
 message(STATUS "INC: ${INC_CUR_DIRS}")
