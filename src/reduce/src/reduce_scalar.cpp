@@ -19,6 +19,7 @@ int32_t ReduceScalar(Mat &mat, int32_t &sum)
         return RET_ERR;
     }
 
+    sum = 0;
     for (int32_t i = 0; i < mat.m_sizes.m_h; ++i)
     {
         for (int32_t j = 0; j < mat.m_sizes.m_w; ++j)
