@@ -84,6 +84,12 @@ SIMPLE_TEST(reduce_test)
         // 1. ******* ReduceNative ********
         {{1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
         {{10000, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
+        {{32 * 1024 * 1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
+
+        // 2. ******* ReduceInterLeaveAddr ********
+        {{1024, 1, 1},              cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+        {{10000, 1, 1},             cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
     };
 
     for (const auto &test_case : test_cases)
