@@ -11,6 +11,9 @@ Enhance the skills of CUDA
 ### matmuls
 Using various methods to do matrix multiplication.
 
+### reduce
+Using various methods to do reduce operations.
+
 ### simple_gtest
 The simple version of Google Test.
 
@@ -25,8 +28,11 @@ bash scripts/build.sh
 ## Run
 ```shell
 # 1. run all tests
-bash ./build/install/test/CUDAUpExe all
+./build/install/test/CUDAUpExe all
 
 # 2. run a specific test case: mat_mul_test
-bash ./build/install/test/CUDAUpExe mat_mul_test
+./build/install/test/CUDAUpExe mat_mul_test
 ```
+
+## Reference
+[CUDATutorial](https://github.com/PaddleJitLab/CUDATutorial/tree/develop)
