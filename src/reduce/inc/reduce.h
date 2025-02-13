@@ -11,4 +11,6 @@ int32_t ReduceNative(Mat &mat, int32_t &sum);
 int32_t ReduceInterLeaveAddr(Mat &mat, int32_t &sum);
 
 int32_t ReduceBankConflictFree(Mat &mat, int32_t &sum);
+
+int32_t ReduceIdleThreadFree(Mat &mat, int32_t &sum);
 } // namespace cudaup

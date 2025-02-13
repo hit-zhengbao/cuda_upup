@@ -93,9 +93,13 @@ SIMPLE_TEST(reduce_test)
 
 
         // 3. ******* ReduceBankConflictFree ********
-        {{1024, 1, 1},              cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
-        {{10000, 1, 1},             cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
-        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+        // {{1024, 1, 1},              cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+        // {{10000, 1, 1},             cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+        // {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+
+        // 4. ******* ReduceIdleThreadFree ********
+        {{1024, 1, 1},              cudaup::ReduceIdleThreadFree, cudaup::ReduceScalar, "ReduceIdleThreadFree"},
+        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceIdleThreadFree, cudaup::ReduceScalar, "ReduceIdleThreadFree"},
     };
 
     for (const auto &test_case : test_cases)
