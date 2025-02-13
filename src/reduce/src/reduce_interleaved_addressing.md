@@ -1,5 +1,5 @@
 # reduce归约操作
-当前实现参考[初版实现](https://github.com/PaddleJitLab/CUDATutorial/blob/develop/docs/09_optimize_reduce/01_interleaved_addressing/README.md), 这个是初版, 后续会进行优化.
+当前实现参考[交错寻址实现](https://github.com/PaddleJitLab/CUDATutorial/blob/develop/docs/09_optimize_reduce/01_interleaved_addressing/README.md)
 
 ## 性能统计
 输入Mat为S32C1类型, 显卡类型为Quadro RTX 5000, 16G显存:

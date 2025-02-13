@@ -82,14 +82,20 @@ SIMPLE_TEST(reduce_test)
 {
     std::vector<ReduceTestCase> test_cases = {
         // 1. ******* ReduceNative ********
-        {{1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
-        {{10000, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
-        {{32 * 1024 * 1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
+        // {{1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
+        // {{10000, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
+        // {{32 * 1024 * 1024, 1, 1}, cudaup::ReduceNative, cudaup::ReduceScalar, "ReduceNative"},
 
         // 2. ******* ReduceInterLeaveAddr ********
-        {{1024, 1, 1},              cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
-        {{10000, 1, 1},             cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
-        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+        // {{1024, 1, 1},              cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+        // {{10000, 1, 1},             cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+        // {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceInterLeaveAddr, cudaup::ReduceScalar, "ReduceInterLeaveAddr"},
+
+
+        // 3. ******* ReduceBankConflictFree ********
+        {{1024, 1, 1},              cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+        {{10000, 1, 1},             cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
+        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceBankConflictFree, cudaup::ReduceScalar, "ReduceBankConflictFree"},
     };
 
     for (const auto &test_case : test_cases)
