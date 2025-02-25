@@ -15,4 +15,6 @@ int32_t ReduceBankConflictFree(Mat &mat, int32_t &sum);
 int32_t ReduceIdleThreadFree(Mat &mat, int32_t &sum);
 
 int32_t ReduceUnrollLastWarpFree(Mat &mat, int32_t &sum);
+
+int32_t ReduceAllUseWarp(Mat &mat, int32_t &sum);
 } // namespace cudaup

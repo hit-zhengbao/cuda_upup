@@ -102,8 +102,12 @@ SIMPLE_TEST(reduce_test)
         // {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceIdleThreadFree, cudaup::ReduceScalar, "ReduceIdleThreadFree"},
 
         // 4. ******* ReduceUnrollLastWarpFree ********
-        {{1024, 1, 1},              cudaup::ReduceUnrollLastWarpFree, cudaup::ReduceScalar, "ReduceUnrollLastWarpFree"},
-        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceUnrollLastWarpFree, cudaup::ReduceScalar, "ReduceUnrollLastWarpFree"},
+        // {{1024, 1, 1},              cudaup::ReduceUnrollLastWarpFree, cudaup::ReduceScalar, "ReduceUnrollLastWarpFree"},
+        // {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceUnrollLastWarpFree, cudaup::ReduceScalar, "ReduceUnrollLastWarpFree"},
+        
+        // 5. ******* ReduceAllUseWarp ********
+        {{1024, 1, 1},              cudaup::ReduceAllUseWarp, cudaup::ReduceScalar, "ReduceAllUseWarp"},
+        {{32 * 1024 * 1024, 1, 1},  cudaup::ReduceAllUseWarp, cudaup::ReduceScalar, "ReduceAllUseWarp"},
     };
 
     for (const auto &test_case : test_cases)
